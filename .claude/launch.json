@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "db",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "db:local"],
+      "port": 54329
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "-p", "3100"],
+      "port": 3100
+    }
+  ]
+}

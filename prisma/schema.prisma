@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Settings {
+  id                Int    @id @default(1)
+  name              String
+  timezone          String @default("Europe/London")
+  slotIntervalMin   Int    @default(15)
+  maxPartyOnline    Int    @default(8)
+  bookingWindowDays Int    @default(30)
+  minNoticeMin      Int    @default(60)
+  phone             String
+  email             String
+  priceRange        String @default("££")
+  cuisine           String @default("Wood-fired, small plates")
+  /// { line1, line2?, city, postcode, country, lat, lng }
+  address           Json
+  /// [{ maxParty: 2, minutes: 90 }, ...] sorted ascending
+  durations         Json
+}
+
+model DiningTable {
+  id       String  @id @default(cuid())
+  label    String  @unique
+  minSeats Int
+  maxSeats Int
+  zone     String?
+  active   Boolean @default(true)
+  bookings BookingTable[]
+}
+
+model TableCombo {
+  id       String   @id @default(cuid())
+  label    String
+  tableIds String[]
+  minSeats Int
+  maxSeats Int
+}
+
+model ServicePeriod {
+  id          String @id @default(cuid())
+  dayOfWeek   Int // 0 = Sunday ... 6 = Saturday
+  name        String // Lunch | Dinner
+  opensAt     String // "12:00"
+  lastSeating String // "14:30"
+  closesAt    String // "16:00"
+
+  @@index([dayOfWeek])
+}
+
+model SpecialDay {
+  id      String   @id @default(cuid())
+  date    DateTime @unique @db.Date
+  closed  Boolean
+  note    String?
+  /// [{ name, opensAt, lastSeating, closesAt }] overrides weekly periods when not closed
+  periods Json?
+}
+
+enum BookingStatus {
+  CONFIRMED
+  SEATED
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+enum BookingSource {
+  WEB
+  ADMIN
+  PHONE
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  ref             String        @unique
+  startsAt        DateTime      @db.Timestamptz
+  endsAt          DateTime      @db.Timestamptz
+  partySize       Int
+  guestName       String
+  email           String
+  phone           String
+  note            String?
+  status          BookingStatus @default(CONFIRMED)
+  source          BookingSource @default(WEB)
+  cancelTokenHash String
+  createdAt       DateTime      @default(now())
+  cancelledAt     DateTime?
+  tables          BookingTable[]
+
+  @@index([startsAt])
+  @@index([email])
+}
+
+/// One row per table held by a booking. `during` is filled by raw SQL
+/// (Prisma cannot create rows with Unsupported columns) and protected by the
+/// no_overlap exclusion constraint added in the hand-written migration.
+model BookingTable {
+  bookingId String
+  tableId   String
+  during    Unsupported("tstzrange")
+  booking   Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  table     DiningTable @relation(fields: [tableId], references: [id], onDelete: Restrict)
+
+  @@id([bookingId, tableId])
+  @@index([tableId])
+}
+
+enum Allergen {
+  CELERY
+  GLUTEN
+  CRUSTACEANS
+  EGGS
+  FISH
+  LUPIN
+  MILK
+  MOLLUSCS
+  MUSTARD
+  NUTS
+  PEANUTS
+  SESAME
+  SOYA
+  SULPHITES
+}
+
+enum Dietary {
+  VEGAN
+  VEGETARIAN
+  GLUTEN_FREE
+}
+
+model MenuSection {
+  id    String     @id @default(cuid())
+  slug  String     @unique
+  name  String
+  order Int
+  items MenuItem[]
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  sectionId   String
+  section     MenuSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  slug        String      @unique
+  name        String
+  description String
+  pricePence  Int
+  imageUrl    String?
+  allergens   Allergen[]
+  dietary     Dietary[]
+  available   Boolean     @default(true)
+  order       Int
+
+  @@index([sectionId])
+}
+
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
+
+// Better Auth tables
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
