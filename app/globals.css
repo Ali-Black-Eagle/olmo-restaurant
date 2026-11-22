@@ -518,8 +518,8 @@ textarea.input {
 }
 .hero-line > span {
   display: block;
-  animation: hero-rise 700ms var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * 70ms + 80ms);
+  animation: hero-rise 500ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
 }
 @keyframes hero-rise {
   from {
@@ -539,9 +539,9 @@ textarea.input {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(160deg, rgba(60, 30, 8, 0.55), rgba(26, 23, 20, 0.45));
+  background: linear-gradient(160deg, rgba(60, 30, 8, 0.4), rgba(26, 23, 20, 0.3));
   pointer-events: none;
-  animation: hero-embers 1.2s var(--ease-out) both;
+  animation: hero-embers 600ms var(--ease-out) both;
 }
 @keyframes hero-embers {
   from {
@@ -557,7 +557,7 @@ textarea.input {
   }
 }
 .hero-copy {
-  animation: hero-fade 600ms ease-out 450ms both;
+  animation: hero-fade 400ms ease-out 200ms both;
 }
 @keyframes hero-fade {
   from {

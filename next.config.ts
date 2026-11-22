@@ -9,6 +9,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Inline the (small) stylesheet into the HTML: removes a render-blocking request.
+    inlineCss: true,
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     qualities: [60, 72, 75],
