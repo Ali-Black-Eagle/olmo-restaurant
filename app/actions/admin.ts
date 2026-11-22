@@ -395,7 +395,8 @@ const settingsSchema = z.object({
   slotIntervalMin: z.coerce.number().int().refine((v) => [10, 15, 20, 30].includes(v), "Slot interval must be 10, 15, 20 or 30 minutes."),
   durations: z
     .array(z.object({ maxParty: z.coerce.number().int().min(1).max(40), minutes: z.coerce.number().int().min(30).max(360) }))
-    .min(1),
+    .min(1)
+    .max(12),
 });
 
 export async function saveSettings(input: z.input<typeof settingsSchema>): Promise<ActionResult> {

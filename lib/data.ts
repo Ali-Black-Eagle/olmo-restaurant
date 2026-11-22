@@ -156,8 +156,13 @@ export function todayDow(timezone: string): number {
   return dayOfWeek(localDate(new Date(), timezone));
 }
 
+/** Public origin for canonical URLs, sitemap, JSON-LD and emails. On Vercel, falls back to the
+ *  project's production domain so a missing env var never publishes localhost URLs. */
 export function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const url = explicit || (vercel ? `https://${vercel}` : "http://localhost:3000");
+  return url.replace(/\/$/, "");
 }
 
 export function formatAddress(a: Address): string {

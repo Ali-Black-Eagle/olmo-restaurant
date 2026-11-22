@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/data";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
@@ -21,7 +22,7 @@ function createAuth() {
   return betterAuth({
     database: prismaAdapter(db, { provider: "postgresql" }),
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    baseURL: process.env.BETTER_AUTH_URL || siteUrl(),
     session: { expiresIn: 60 * 60 * 24 * 14, updateAge: 60 * 60 * 24 },
     databaseHooks: {
       user: {

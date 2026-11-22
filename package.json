@@ -64,5 +64,9 @@
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "zod": "$zod",
+    "effect": "^3.22.1"
   }
 }

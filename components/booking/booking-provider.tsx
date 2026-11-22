@@ -1,11 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Drawer } from "vaul";
 import { X } from "lucide-react";
-import { BookingFlow } from "./booking-flow";
+
+// The flow (and the motion library it uses) only loads when the sheet is needed:
+// prefetched once the page is idle, so the first tap still opens instantly.
+const loadFlow = () => import("./booking-flow");
+const BookingFlow = dynamic(() => loadFlow().then((m) => m.BookingFlow), {
+  ssr: false,
+  loading: () => <div className="skeleton mx-5 my-6 h-64 rounded-[18px]" aria-hidden="true" />,
+});
 import type { BookingConfig, Prefill } from "./types";
 
 type Ctx = { open: (prefill?: Prefill) => void; isOpen: boolean; config: BookingConfig };
@@ -37,6 +45,13 @@ export function BookingProvider({ config, children }: { config: BookingConfig; c
 
   const register = useCallback((fn: () => void) => {
     closeFn.current = fn;
+  }, []);
+
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const warm = () => void loadFlow();
+    if (w.requestIdleCallback) w.requestIdleCallback(warm, { timeout: 4000 });
+    else setTimeout(warm, 2500);
   }, []);
 
   // Navigating to another page closes the sheet.
