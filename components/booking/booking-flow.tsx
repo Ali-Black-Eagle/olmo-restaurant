@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createBookingAction, type BookingTicket } from "@/app/actions/booking";
 import { Button } from "@/components/ui/button";
-import { addDays, dayOfWeek, formatClock, formatDateLong, formatDateShort } from "@/lib/time";
+import { addDays, dayOfWeek, formatClock, formatDateLong, formatDateShort, todayIn } from "@/lib/time";
 import { AutoHeight } from "./auto-height";
 import { Ticket } from "./ticket";
 import type { AvailabilityResponse, BookingConfig, Prefill } from "./types";
@@ -45,9 +45,6 @@ function saveGuest(g: Guest) {
   } catch {}
 }
 
-export function todayIn(tz: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
 
 function stepFromUrl(): Step | null {
   const s = new URLSearchParams(window.location.search).get("step");

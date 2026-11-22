@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { HoursRow, SpecialDayView } from "@/lib/data";
-import { dayOfWeek, formatClock, formatDateLong } from "@/lib/time";
-import { todayIn } from "@/components/booking/booking-flow";
+import { dayOfWeek, formatClock, formatDateLong, todayIn } from "@/lib/time";
 
 /** Weekly hours with today highlighted. Today is computed in the browser so cached pages never show a stale day. */
 export function HoursTable({ rows, timezone, special }: { rows: HoursRow[]; timezone: string; special: SpecialDayView[] }) {

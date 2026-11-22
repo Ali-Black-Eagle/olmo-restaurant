@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useBooking } from "@/components/booking/booking-provider";
-import { todayIn } from "@/components/booking/booking-flow";
 import type { AvailabilityResponse } from "@/components/booking/types";
 import { BookButton } from "@/components/booking/book-button";
-import { formatClock } from "@/lib/time";
+import { formatClock, todayIn } from "@/lib/time";
 
 /** Next free times today for two. Tapping a time opens the booking sheet on the confirm step. */
 export function TonightStrip() {

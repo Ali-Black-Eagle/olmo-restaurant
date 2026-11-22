@@ -90,3 +90,8 @@ export function formatGBP(pence: number): string {
   const pounds = pence / 100;
   return Number.isInteger(pounds) ? `£${pounds}` : `£${pounds.toFixed(2)}`;
 }
+
+/** Today's date (YYYY-MM-DD) in the given IANA timezone. Safe to import from any client component. */
+export function todayIn(tz: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}

@@ -4,17 +4,12 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Drawer } from "vaul";
-import { X } from "lucide-react";
-
-// The flow (and the motion library it uses) only loads when the sheet is needed:
-// prefetched once the page is idle, so the first tap still opens instantly.
-const loadFlow = () => import("./booking-flow");
-const BookingFlow = dynamic(() => loadFlow().then((m) => m.BookingFlow), {
-  ssr: false,
-  loading: () => <div className="skeleton mx-5 my-6 h-64 rounded-[18px]" aria-hidden="true" />,
-});
 import type { BookingConfig, Prefill } from "./types";
+
+// The sheet (vaul, motion and the booking flow) is kept out of the first page load.
+// It is prefetched a moment after the page has loaded, so the first tap still opens instantly.
+const loadSheet = () => import("./booking-sheet");
+const BookingSheet = dynamic(loadSheet, { ssr: false });
 
 type Ctx = { open: (prefill?: Prefill) => void; isOpen: boolean; config: BookingConfig };
 const BookingContext = createContext<Ctx | null>(null);
@@ -29,12 +24,14 @@ export function BookingProvider({ config, children }: { config: BookingConfig; c
   const [isOpen, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<Prefill | undefined>();
   const [session, setSession] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const closeFn = useRef<(() => void) | null>(null);
   const pathname = usePathname();
 
   const open = useCallback((p?: Prefill) => {
     setPrefill(p);
     setSession((s) => s + 1);
+    setMounted(true);
     setOpen(true);
   }, []);
 
@@ -48,10 +45,16 @@ export function BookingProvider({ config, children }: { config: BookingConfig; c
   }, []);
 
   useEffect(() => {
-    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-    const warm = () => void loadFlow();
-    if (w.requestIdleCallback) w.requestIdleCallback(warm, { timeout: 4000 });
-    else setTimeout(warm, 2500);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const warm = () => {
+      timer = setTimeout(() => void loadSheet(), 2000);
+    };
+    if (document.readyState === "complete") warm();
+    else window.addEventListener("load", warm, { once: true });
+    return () => {
+      window.removeEventListener("load", warm);
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   // Navigating to another page closes the sheet.
@@ -64,34 +67,17 @@ export function BookingProvider({ config, children }: { config: BookingConfig; c
   return (
     <BookingContext.Provider value={value}>
       {children}
-      <Drawer.Root open={isOpen} onOpenChange={(o) => (o ? setOpen(true) : close())} repositionInputs={false}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-[110] bg-char/55" />
-          <Drawer.Content
-            aria-describedby={undefined}
-            className="fixed inset-x-0 bottom-0 z-[120] mx-auto flex max-h-[92dvh] w-full max-w-[560px] flex-col rounded-t-[28px] bg-ticket outline-none"
-            style={{ boxShadow: "var(--lift)", paddingBottom: "env(safe-area-inset-bottom)" }}
-          >
-            <div className="relative h-14 shrink-0 border-b border-transparent pt-3">
-              <div aria-hidden="true" className="mx-auto h-1.5 w-11 rounded-full bg-olive/40" />
-              <Drawer.Title className="visually-hidden">Book a table at Olmo</Drawer.Title>
-              <button
-                type="button"
-                onClick={close}
-                aria-label="Close booking"
-                className="absolute right-3 top-1 inline-flex size-11 items-center justify-center rounded-full hover:bg-olive-ink/6"
-              >
-                <X aria-hidden="true" size={22} />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              {isOpen ? (
-                <BookingFlow key={session} config={config} variant="sheet" prefill={prefill} onClose={close} registerCloseHandler={register} />
-              ) : null}
-            </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+      {mounted ? (
+        <BookingSheet
+          isOpen={isOpen}
+          session={session}
+          config={config}
+          prefill={prefill}
+          onOpenChange={(o) => (o ? setOpen(true) : close())}
+          onClose={close}
+          registerCloseHandler={register}
+        />
+      ) : null}
     </BookingContext.Provider>
   );
 }
