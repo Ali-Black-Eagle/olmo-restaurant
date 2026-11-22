@@ -1,0 +1,15 @@
+# Local-only files must never be uploaded by `vercel deploy`:
+# environment files (production values live in Vercel's env settings),
+# the embedded dev database, and build/test output.
+.env
+.env.*
+!.env.example
+.pgdata
+.next
+node_modules
+generated
+test-results
+playwright-report
+coverage
+*.tsbuildinfo
+.claude
