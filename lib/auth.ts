@@ -43,7 +43,7 @@ function createAuth() {
             subject: "Your Olmo admin sign-in link",
             react: createElement(MagicLink, { url }),
           });
-          if (!process.env.RESEND_API_KEY) console.log(`[auth:dev] magic link for ${email}: ${url}`);
+          if (!process.env.RESEND_API_KEY && !process.env.VERCEL_ENV) console.log(`[auth:dev] magic link for ${email}: ${url}`);
         },
       }),
       nextCookies(),

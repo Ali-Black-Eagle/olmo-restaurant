@@ -27,6 +27,12 @@ export async function sendEmail(args: SendArgs): Promise<{ sent: boolean; logged
     const [html, text] = await Promise.all([render(args.react), render(args.react, { plainText: true })]);
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
+      // On a deployed site, never write email bodies (cancel links, sign-in links, guest
+      // details) to the logs; only note that sending was skipped.
+      if (process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview") {
+        console.warn(`[email] RESEND_API_KEY not set; skipped "${args.subject}".`);
+        return { sent: false };
+      }
       console.log(
         `\n[email:dev] RESEND_API_KEY not set, not sending.\n  to: ${[args.to].flat().join(", ")}\n  subject: ${args.subject}\n  attachments: ${(args.attachments ?? []).map((a) => a.filename).join(", ") || "none"}\n  ---\n${text}\n  ---\n`,
       );
