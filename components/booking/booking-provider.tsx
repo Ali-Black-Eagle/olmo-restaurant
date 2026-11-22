@@ -6,8 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from "react";
 import type { BookingConfig, Prefill } from "./types";
 
-// The sheet (vaul, motion and the booking flow) is kept out of the first page load.
-// It is prefetched a moment after the page has loaded, so the first tap still opens instantly.
+// The sheet (vaul, motion and the booking flow) is kept out of the page load entirely.
 const loadSheet = () => import("./booking-sheet");
 const BookingSheet = dynamic(loadSheet, { ssr: false });
 
@@ -44,17 +43,19 @@ export function BookingProvider({ config, children }: { config: BookingConfig; c
     closeFn.current = fn;
   }, []);
 
+  // Prefetch the sheet on intent (hover, focus or touch on anything that opens it), not on a
+  // timer: it stays out of the page load entirely and is ready by the time the tap lands.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const warm = () => {
-      timer = setTimeout(() => void loadSheet(), 2000);
+    const trigger = '[aria-haspopup="dialog"], [data-booking-trigger]';
+    const onIntent = (e: Event) => {
+      if (e.target instanceof Element && e.target.closest(trigger)) {
+        void loadSheet();
+        events.forEach((t) => document.removeEventListener(t, onIntent, true));
+      }
     };
-    if (document.readyState === "complete") warm();
-    else window.addEventListener("load", warm, { once: true });
-    return () => {
-      window.removeEventListener("load", warm);
-      if (timer) clearTimeout(timer);
-    };
+    const events = ["pointerover", "focusin", "touchstart"] as const;
+    events.forEach((t) => document.addEventListener(t, onIntent, { capture: true, passive: true }));
+    return () => events.forEach((t) => document.removeEventListener(t, onIntent, true));
   }, []);
 
   // Navigating to another page closes the sheet.

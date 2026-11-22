@@ -39,7 +39,8 @@ export default async function HomePage() {
               fill
               priority
               fetchPriority="high"
-              sizes="(min-width: 768px) 58vw, 100vw"
+              sizes="(min-width: 768px) 58vw, calc(100vw - 32px)"
+              quality={60}
               className="object-cover"
             />
           </div>

@@ -4,7 +4,9 @@ import "./globals.css";
 import { siteUrl } from "@/lib/data";
 
 const gloock = Gloock({ subsets: ["latin"], weight: "400", variable: "--font-gloock", display: "swap" });
-const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap" });
+// Not preloaded: body text renders at once in a size-matched fallback, and the hero photo
+// gets the bandwidth first. Gloock (the headline face) stays preloaded.
+const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),

@@ -2,7 +2,11 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Popover from "@radix-ui/react-popover";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, LayoutGroup, LazyMotion, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+
+// Animation features load after the menu has rendered, keeping them off the critical path.
+const loadFeatures = () => import("./motion-features").then((r) => r.default);
 import { ChevronDown, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -55,6 +59,7 @@ export function MenuBrowser({ sections }: { sections: MenuSectionView[] }) {
   const spring = reduce ? { duration: 0.01 } : { type: "spring" as const, stiffness: 400, damping: 34 };
 
   return (
+    <LazyMotion features={loadFeatures} strict>
     <LayoutGroup>
       <div
         className="sticky z-[70] border-b border-olive/15 bg-linen"
@@ -175,10 +180,10 @@ export function MenuBrowser({ sections }: { sections: MenuSectionView[] }) {
                   <h2 id={`h-${s.slug}`} className="mb-8 text-[2.441rem]">
                     {s.name}
                   </h2>
-                  <motion.ul layout className="grid gap-x-12 gap-y-10 lg:grid-cols-2">
+                  <m.ul layout className="grid gap-x-12 gap-y-10 lg:grid-cols-2">
                     <AnimatePresence mode="popLayout" initial={false}>
                       {s.items.map((item) => (
-                        <motion.li
+                        <m.li
                           key={item.id}
                           layout="position"
                           initial={{ opacity: 0, scale: 0.96 }}
@@ -188,10 +193,10 @@ export function MenuBrowser({ sections }: { sections: MenuSectionView[] }) {
                           className="dish"
                         >
                           <DishRow item={item} onOpen={() => setDetail(item)} />
-                        </motion.li>
+                        </m.li>
                       ))}
                     </AnimatePresence>
-                  </motion.ul>
+                  </m.ul>
                 </section>
               ),
             )}
@@ -201,6 +206,7 @@ export function MenuBrowser({ sections }: { sections: MenuSectionView[] }) {
 
       <DishDetail item={detail} onClose={() => setDetail(null)} />
     </LayoutGroup>
+    </LazyMotion>
   );
 }
 
@@ -210,13 +216,13 @@ function DishRow({ item, onOpen }: { item: MenuItemView; onOpen: () => void }) {
     <div className={item.imageUrl ? "grid grid-cols-[112px_1fr] items-start gap-4 sm:grid-cols-[200px_1fr] sm:gap-6" : ""}>
       {item.imageUrl ? (
         <button type="button" onClick={onOpen} className="block text-left" aria-label={`${item.name}: view details`}>
-          <motion.div
+          <m.div
             layoutId={`photo-${item.slug}`}
             className="photo aspect-[4/3] w-full"
             style={signature ? { viewTransitionName: `dish-${item.slug}` } : undefined}
           >
             <Image src={item.imageUrl} alt="" fill sizes="(min-width: 640px) 200px, 112px" />
-          </motion.div>
+          </m.div>
         </button>
       ) : null}
       <div>
@@ -250,7 +256,7 @@ function DishDetail({ item, onClose }: { item: MenuItemView | null; onClose: () 
         {item ? (
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild forceMount>
-              <motion.div
+              <m.div
                 className="fixed inset-0 z-[140] bg-char/55"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -260,7 +266,7 @@ function DishDetail({ item, onClose }: { item: MenuItemView | null; onClose: () 
             </Dialog.Overlay>
             <div className="pointer-events-none fixed inset-0 z-[150] flex items-end justify-center sm:items-center sm:p-6">
               <Dialog.Content asChild forceMount aria-describedby={undefined}>
-                <motion.div
+                <m.div
                   className="pointer-events-auto max-h-[92dvh] w-full max-w-[560px] overflow-y-auto rounded-t-[28px] bg-ticket p-5 outline-none sm:rounded-[28px]"
                   style={{ boxShadow: "var(--lift)", paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
                   initial={reduce ? { opacity: 0 } : { y: 40, opacity: 0 }}
@@ -272,9 +278,9 @@ function DishDetail({ item, onClose }: { item: MenuItemView | null; onClose: () 
                     <X aria-hidden="true" size={22} />
                   </Dialog.Close>
                   {item.imageUrl ? (
-                    <motion.div layoutId={`photo-${item.slug}`} className="photo aspect-[4/3] w-full">
+                    <m.div layoutId={`photo-${item.slug}`} className="photo aspect-[4/3] w-full">
                       <Image src={item.imageUrl} alt={item.name} fill sizes="560px" />
-                    </motion.div>
+                    </m.div>
                   ) : null}
                   <div className="mt-5 flex items-baseline justify-between gap-4">
                     <Dialog.Title className="font-display text-3xl leading-tight">{item.name}</Dialog.Title>
@@ -293,7 +299,7 @@ function DishDetail({ item, onClose }: { item: MenuItemView | null; onClose: () 
                     {item.allergens.length ? `Contains ${item.allergens.map((a) => allergenLabel(a).toLowerCase()).join(", ")}.` : "No listed allergens."}
                   </p>
                   <p className="mt-3 text-sm text-olive">Please tell us about any allergy when you book or order. Dishes are cooked in a kitchen that handles all 14 allergens.</p>
-                </motion.div>
+                </m.div>
               </Dialog.Content>
             </div>
           </Dialog.Portal>
